@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Bucket that will house jupyter notebooks.
+
+Parameters:
+  BucketName:
+    Type: String
+    Default: nhl-jupyter-notebooks
+
+Resources:
+  JupyterBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
