@@ -22,17 +22,9 @@ Parameters:
     Default: m4.2xlarge
     AllowedValues:
       - m4.large
-      - m4.xlarge
       - m4.2xlarge
-      - m4.4xlarge
       - c4.large
-      - c4.xlarge
-      - c4.2xlarge
-      - c4.4xlarge
       - r3.xlarge
-      - r3.2xlarge
-      - r3.4xlarge
-      - r3.8xlarge
   CoreInstanceCount:
     Type: Number
     Description: Number of core nodes for the EMR Cluster.
@@ -43,17 +35,9 @@ Parameters:
     Default: m4.2xlarge
     AllowedValues:
       - m4.large
-      - m4.xlarge
       - m4.2xlarge
-      - m4.4xlarge
       - c4.large
-      - c4.xlarge
-      - c4.2xlarge
-      - c4.4xlarge
       - r3.xlarge
-      - r3.2xlarge
-      - r3.4xlarge
-      - r3.8xlarge
   JupyterBucket:
     Type: String
     Description: Bucket where Jupyter Notebooks are stored
@@ -64,7 +48,6 @@ Parameters:
 
 
 Resources:
-
   JupyterWebAccess:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -75,7 +58,7 @@ Resources:
           FromPort: 9443
           ToPort: 9443
           CidrIp: !Ref MyIp
-  
+
   EmrCluster:
     Type: AWS::EMR::Cluster
     Properties:
