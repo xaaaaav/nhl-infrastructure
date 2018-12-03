@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: EMR Cluster with Jupyter Notebook for NHL Exploration.
+
+Parameters:
+  EMRVersion:
+    Type: String
+    Description: Version of EMR to use
+    Default: emr-5.18.0
+  EmrVpc:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC for EMR Nodes
+  MyIp:
+    Type: String
+    Default: 0.0.0.0/0
+  MasterInstanceCount:
+    Type: Number
+    Description: Number of master nodes for the EMR Cluster.
+    Default: 1
+  MasterInstanceType:
+    Type: String
+    Description: Type of EC2 Instance for the master node.
+    Default: m4.2xlarge
+    AllowedValues:
+      - m4.large
+      - m4.2xlarge
+      - c4.large
+      - r3.xlarge
+  CoreInstanceCount:
+    Type: Number
+    Description: Number of core nodes for the EMR Cluster.
+    Default: 1
+  CoreInstanceType:
+    Type: String
+    Description: Type of EC2 Instance for the core nodes.
+    Default: m4.2xlarge
+    AllowedValues:
+      - m4.large
+      - m4.2xlarge
+      - c4.large
+      - r3.xlarge
+  JupyterBucket:
+    Type: String
+    Description: Bucket where Jupyter Notebooks are stored
+    Default: nhl-jupyter-notebooks
+  EC2KeyName:
+    Description: SSH key pair to use for EMR node login
+    Type: AWS::EC2::KeyPair::KeyName
+
+
+Resources:
+  JupyterWebAccess:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Jupyter
+      VpcId: !Ref EmrVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9443
+          ToPort: 9443
+          CidrIp: !Ref MyIp
+
+  EmrCluster:
+    Type: AWS::EMR::Cluster
+    Properties:
+      Instances:
+        Ec2KeyName:
+          Ref: EC2KeyName
+        MasterInstanceGroup:
+          InstanceCount: !Ref MasterInstanceCount
+          InstanceType: !Ref MasterInstanceType
+          Market: ON_DEMAND
+          Name: Master
+        CoreInstanceGroup:
+          InstanceCount: !Ref CoreInstanceCount
+          InstanceType: !Ref CoreInstanceType
+          Market: ON_DEMAND
+          Name: Core
+        TerminationProtected: false
+      Name: "NHL-Discover-Cluster"
+      JobFlowRole: EMR_EC2_DefaultRole
+      ServiceRole: EMR_DefaultRole
+      ReleaseLabel: !Ref EMRVersion
+      Applications:
+        - Name: Spark
+        - Name: JupyterHub
+        - Name: Ganglia
+      BootstrapActions:
+        - Name: InstallJupyterLibs
+          ScriptBootstrapAction:
+            Path: !Sub s3://${JupyterBucket}/install_jupyter_libraries.sh
+      Configurations:
+        - Classification: jupyter-s3-conf
+          ConfigurationProperties:
+            s3.persistence.enabled: true
+            s3.persistence.bucket: !Ref JupyterBucket
+
+Outputs:
+  JupyterURL:
+    Value: !Sub "https://${EmrCluster.MasterPublicDNS}:9443"
